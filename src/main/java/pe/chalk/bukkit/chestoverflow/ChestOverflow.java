@@ -51,22 +51,27 @@ public class ChestOverflow extends JavaPlugin implements Listener {
         if(event.getAction() != Action.LEFT_CLICK_BLOCK) return;
 
         final Block block = event.getClickedBlock();
-        if(!block.getType().getData().isAssignableFrom(org.bukkit.material.Chest.class)) return;
+        if(!(block.getState() instanceof Chest)) return;
 
-        final Inventory inventory = ((Chest) block.getState()).getInventory();
+        final Chest chest = (Chest) block.getState();
+        final Inventory inventory = chest.getInventory();
+        if(inventory.getContents() == null || inventory.getSize() <= 0 || inventory.getContents().length <= 0) return;
+
         final List<ItemStack> stacks = Arrays.stream(inventory.getContents()).collect(Collectors.<ItemStack>toList());
         final List<ItemStack> cleanStacks = ChestOverflow.sortedItemStacks(ChestOverflow.distinctItemStacks(stacks));
-
         while(cleanStacks.size() > inventory.getMaxStackSize()) block.getWorld().dropItemNaturally(block.getLocation(), cleanStacks.remove(cleanStacks.size() - 1));
-        inventory.setContents(cleanStacks.toArray(new ItemStack[cleanStacks.size()]));
+
+        inventory.setContents(cleanStacks.toArray(new ItemStack[inventory.getSize()]));
+        chest.update(true);
 
         event.getPlayer().sendMessage(ChatColor.AQUA + "Your chest has been sorted!");
     }
 
     public static List<ItemStack> distinctItemStacks(final List<ItemStack> stacks){
         final List<ItemStack> distinctStacks = new ArrayList<>();
-        stacks.forEach((final ItemStack stack) -> {
+        stacks.stream().filter(Objects::nonNull).forEach((final ItemStack stack) -> {
             final Optional<ItemStack> similarStack = distinctStacks.stream()
+                    .filter(Objects::nonNull)
                     .filter(theStack -> theStack.isSimilar(stack))
                     .filter(theStack -> theStack.getAmount() < theStack.getMaxStackSize())
                     .findFirst();
@@ -89,7 +94,10 @@ public class ChestOverflow extends JavaPlugin implements Listener {
 
     @SuppressWarnings("deprecation")
     public static final Comparator<ItemStack> COMPARATOR = Comparator.comparingInt(ItemStack::getTypeId)
-            .thenComparingInt(stack -> -stack.getDurability())
+            .thenComparingInt(stack -> -stack.getEnchantments().values().stream().mapToInt(level -> level * level).sum())
+            .thenComparing(stack -> stack.getItemMeta().hasDisplayName() ? stack.getItemMeta().getDisplayName() : null, Comparator.nullsLast(String::compareTo))
+            .thenComparingInt(stack -> stack.getItemMeta().hasLore() ? stack.getItemMeta().getLore().size() : Integer.MAX_VALUE)
+            .thenComparingInt(ItemStack::getDurability)
             .thenComparingInt(stack -> -stack.getAmount());
 
     public static List<ItemStack> sortedItemStacks(final List<ItemStack> stacks){

@@ -1,6 +1,19 @@
 # ChestOverflow
 An useless chest sorting plugin for Bukkit
 
+## Usage
+Just left click the chests, trapped chests, ender chests, hoppers, droppers and dispensers with your hands!
+
+## Commands
+- None!
+
+## Permissions
+- `chestoverflow.use` allows the player to sort the blocks' inventory.
+
+## Requirements
+- Java 1.8+
+- Bukkit 1.8+
+
 ## License
 ```
 Copyright (C) 2016  ChalkPE

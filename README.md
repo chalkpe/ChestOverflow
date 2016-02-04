@@ -15,7 +15,7 @@ Just left click the chests, trapped chests, ender chests, hoppers, droppers and 
 ![After](http://i.imgur.com/z1Xruid.png)
 
 ## Video preview
-<iframe width="560" height="315" src="https://www.youtube.com/embed/I9QmjU1ncyc" frameborder="0" allowfullscreen></iframe>
+- [Watch on YouTube](https://youtu.be/I9QmjU1ncyc)
 
 ## Requirements
 - Java 1.8+

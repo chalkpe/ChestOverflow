@@ -10,6 +10,10 @@ Just left click the chests, trapped chests, ender chests, hoppers, droppers and 
 ## Permissions
 - `chestoverflow.use` allows the player to sort the blocks' inventory.
 
+## Screenshots
+![Before](http://i.imgur.com/7aVkzj7.png)
+![After](http://i.imgur.com/z1Xruid.png)
+
 ## Requirements
 - Java 1.8+
 - Bukkit 1.8+

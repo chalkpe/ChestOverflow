@@ -18,15 +18,17 @@
 package pe.chalk.bukkit.chestoverflow;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.*;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
@@ -45,26 +47,51 @@ public class ChestOverflow extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event){
         if(event.isCancelled()) return;
-        if(!event.getPlayer().hasPermission("chestoverflow.use")) return;
+
+        final Player player = event.getPlayer();
+        if(!player.hasPermission("chestoverflow.use")) return;
 
         if(event.hasItem()) return;
         if(event.getAction() != Action.LEFT_CLICK_BLOCK) return;
 
         final Block block = event.getClickedBlock();
-        if(!(block.getState() instanceof Chest)) return;
+        if(ChestOverflow.handleChest(block, player)){
+            event.getPlayer().sendMessage(ChatColor.AQUA + String.format("Your %s has been sorted!", ChestOverflow.isChest(block) ? "chest" : "block's inventory"));
+        }
+    }
 
-        final Chest chest = (Chest) block.getState();
-        final Inventory inventory = chest.getInventory();
-        if(inventory.getContents() == null || inventory.getSize() <= 0 || inventory.getContents().length <= 0) return;
+    public static boolean isChest(final Block block){
+        return block.getState() instanceof Chest || block.getType() == Material.ENDER_CHEST;
+    }
+
+    public static boolean hasNormalInventory(final Block block){
+        if(block.getState() == null) return false;
+        final BlockState state = block.getState();
+
+        if(!(state instanceof InventoryHolder)) return false;
+        final Inventory inventory = ((InventoryHolder) state).getInventory();
+
+        return inventory != null && !(inventory instanceof FurnaceInventory || inventory instanceof BrewerInventory || inventory instanceof BeaconInventory);
+    }
+
+    public static Inventory getInventoryFromBlock(final Block block, final Player player){
+        if(block == null) return null;
+        if(block.getType() == Material.ENDER_CHEST && player != null) return player.getEnderChest();
+        if(block.getState() != null && block.getState() instanceof InventoryHolder && ChestOverflow.hasNormalInventory(block)) return ((InventoryHolder) block.getState()).getInventory();
+        return null;
+    }
+
+    public static boolean handleChest(final Block block, final Player player){
+        final Inventory inventory = getInventoryFromBlock(block, player);
+        if(inventory == null || inventory.getSize() <= 0 || inventory.getContents() == null || inventory.getContents().length <= 0) return false;
 
         final List<ItemStack> stacks = Arrays.stream(inventory.getContents()).collect(Collectors.<ItemStack>toList());
         final List<ItemStack> cleanStacks = ChestOverflow.sortedItemStacks(ChestOverflow.distinctItemStacks(stacks));
         while(cleanStacks.size() > inventory.getMaxStackSize()) block.getWorld().dropItemNaturally(block.getLocation(), cleanStacks.remove(cleanStacks.size() - 1));
 
         inventory.setContents(cleanStacks.toArray(new ItemStack[inventory.getSize()]));
-        chest.update(true);
-
-        event.getPlayer().sendMessage(ChatColor.AQUA + "Your chest has been sorted!");
+        block.getState().update(true);
+        return true;
     }
 
     public static List<ItemStack> distinctItemStacks(final List<ItemStack> stacks){

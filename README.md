@@ -14,6 +14,9 @@ Just left click the chests, trapped chests, ender chests, hoppers, droppers and 
 ![Before](http://i.imgur.com/7aVkzj7.png)
 ![After](http://i.imgur.com/z1Xruid.png)
 
+## Video preview
+<iframe width="560" height="315" src="https://www.youtube.com/embed/I9QmjU1ncyc" frameborder="0" allowfullscreen></iframe>
+
 ## Requirements
 - Java 1.8+
 - Bukkit 1.8+

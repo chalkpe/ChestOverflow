@@ -55,7 +55,7 @@ public class ChestOverflow extends JavaPlugin implements Listener {
         if(event.getAction() != Action.LEFT_CLICK_BLOCK) return;
 
         final Block block = event.getClickedBlock();
-        if(ChestOverflow.handleChest(block, player)){
+        if(block != null && ChestOverflow.handleChest(block, player)){
             event.getPlayer().sendMessage(ChatColor.AQUA + String.format("Your %s has been sorted!", ChestOverflow.isChest(block) ? "chest" : "block's inventory"));
         }
     }
@@ -65,25 +65,23 @@ public class ChestOverflow extends JavaPlugin implements Listener {
     }
 
     public static boolean hasNormalInventory(final Block block){
-        if(block.getState() == null) return false;
         final BlockState state = block.getState();
-
         if(!(state instanceof InventoryHolder)) return false;
-        final Inventory inventory = ((InventoryHolder) state).getInventory();
 
-        return inventory != null && !(inventory instanceof FurnaceInventory || inventory instanceof BrewerInventory || inventory instanceof BeaconInventory);
+        final Inventory inventory = ((InventoryHolder) state).getInventory();
+        return !(inventory instanceof FurnaceInventory || inventory instanceof BrewerInventory || inventory instanceof BeaconInventory);
     }
 
     public static Inventory getInventoryFromBlock(final Block block, final Player player){
         if(block == null) return null;
         if(block.getType() == Material.ENDER_CHEST && player != null) return player.getEnderChest();
-        if(block.getState() != null && block.getState() instanceof InventoryHolder && ChestOverflow.hasNormalInventory(block)) return ((InventoryHolder) block.getState()).getInventory();
+        if(block.getState() instanceof InventoryHolder && ChestOverflow.hasNormalInventory(block)) return ((InventoryHolder) block.getState()).getInventory();
         return null;
     }
 
     public static boolean handleChest(final Block block, final Player player){
         final Inventory inventory = getInventoryFromBlock(block, player);
-        if(inventory == null || inventory.getSize() <= 0 || inventory.getContents() == null || inventory.getContents().length <= 0) return false;
+        if(inventory == null || inventory.getSize() <= 0 || inventory.getContents().length <= 0) return false;
 
         final List<ItemStack> stacks = Arrays.stream(inventory.getContents()).collect(Collectors.<ItemStack>toList());
         final List<ItemStack> cleanStacks = ChestOverflow.sortedItemStacks(ChestOverflow.distinctItemStacks(stacks));
@@ -120,10 +118,10 @@ public class ChestOverflow extends JavaPlugin implements Listener {
     }
 
     @SuppressWarnings("deprecation")
-    public static final Comparator<ItemStack> COMPARATOR = Comparator.comparingInt(ItemStack::getTypeId)
+    public static final Comparator<ItemStack> COMPARATOR = Comparator.comparing(ItemStack::getType)
             .thenComparingInt(stack -> -stack.getEnchantments().values().stream().mapToInt(level -> level * level).sum())
-            .thenComparing(stack -> stack.getItemMeta().hasDisplayName() ? stack.getItemMeta().getDisplayName() : null, Comparator.nullsLast(String::compareTo))
-            .thenComparingInt(stack -> stack.getItemMeta().hasLore() ? stack.getItemMeta().getLore().size() : Integer.MAX_VALUE)
+            .thenComparing(stack -> stack.getItemMeta() != null && stack.getItemMeta().hasDisplayName() ? stack.getItemMeta().getDisplayName() : null, Comparator.nullsLast(String::compareTo))
+            .thenComparingInt(stack -> stack.getItemMeta() != null && stack.getItemMeta().hasLore() && stack.getItemMeta().getLore() != null ? stack.getItemMeta().getLore().size() : Integer.MAX_VALUE)
             .thenComparingInt(ItemStack::getDurability)
             .thenComparingInt(stack -> -stack.getAmount());
 

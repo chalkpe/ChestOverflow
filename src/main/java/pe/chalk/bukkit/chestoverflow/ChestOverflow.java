@@ -17,8 +17,8 @@
 
 package pe.chalk.bukkit.chestoverflow;
 
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
@@ -35,7 +35,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * @author ChalkPE <chalkpe@gmail.com>
+ * @author Chalk <chalkpe@gmail.com>
  * @since 2016-02-04
  */
 public class ChestOverflow extends JavaPlugin implements Listener {
@@ -56,12 +56,8 @@ public class ChestOverflow extends JavaPlugin implements Listener {
 
         final Block block = event.getClickedBlock();
         if(block != null && ChestOverflow.handleChest(block, player)){
-            event.getPlayer().sendMessage(ChatColor.AQUA + String.format("Your %s has been sorted!", ChestOverflow.isChest(block) ? "chest" : "block's inventory"));
+            event.getPlayer().playSound(block.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.2f, 0.5f);
         }
-    }
-
-    public static boolean isChest(final Block block){
-        return block.getState() instanceof Chest || block.getType() == Material.ENDER_CHEST;
     }
 
     public static boolean hasNormalInventory(final Block block){

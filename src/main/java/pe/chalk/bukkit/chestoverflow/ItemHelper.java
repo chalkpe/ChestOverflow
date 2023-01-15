@@ -9,7 +9,10 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.List;
 import java.util.Map;
 
-
+/**
+ * @author Chalk <chalkpe@gmail.com>
+ * @since 2023-01-16
+ */
 public class ItemHelper {
     public static Map<Enchantment, Integer> getStoredEnchants(ItemMeta meta) {
         return meta instanceof EnchantmentStorageMeta ? ((EnchantmentStorageMeta) meta).getStoredEnchants() : ImmutableMap.of();

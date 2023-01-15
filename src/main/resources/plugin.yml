@@ -2,3 +2,9 @@ name: ${project.name}
 version: ${project.version}
 description: ${project.description}
 main: ${project.mainClass}
+
+commands:
+  sort:
+    usage: /sort
+    permission: chestoverflow.use
+    description: Sort the inventory of current player

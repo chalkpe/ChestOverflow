@@ -21,6 +21,10 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -34,15 +38,19 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Chalk <chalkpe@gmail.com>
  * @since 2016-02-04
  */
-public class ChestOverflow extends JavaPlugin implements Listener {
+public class ChestOverflow extends JavaPlugin implements Listener, CommandExecutor {
     @Override
     public void onEnable() {
         this.getServer().getPluginManager().registerEvents(this, this);
+
+        final PluginCommand command = this.getCommand("sort");
+        if (command != null) command.setExecutor(this);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -57,6 +65,18 @@ public class ChestOverflow extends JavaPlugin implements Listener {
         if(block != null && ChestOverflow.handleChest(block, player)){
             player.playSound(block.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.2f, 0.5f);
         }
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof Player)) return true;
+        if (!command.getName().equals("sort")) return true;
+
+        final Player player = (Player) sender;
+        if (ChestOverflow.handlePlayer(player)) {
+            player.playSound(player.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.2f, 0.5f);
+        }
+        return true;
     }
 
     public static boolean hasNormalInventory(final Block block){
@@ -78,12 +98,26 @@ public class ChestOverflow extends JavaPlugin implements Listener {
         final Inventory inventory = getInventoryFromBlock(block, player);
         if(inventory == null || inventory.getSize() <= 0 || inventory.getContents().length == 0) return false;
 
-        final List<ItemStack> stacks = Arrays.stream(inventory.getContents()).collect(Collectors.<ItemStack>toList());
+        final List<ItemStack> stacks = Arrays.stream(inventory.getContents()).collect(Collectors.toList());
         final List<ItemStack> cleanStacks = ChestOverflow.sortedItemStacks(ChestOverflow.distinctItemStacks(stacks));
         while(cleanStacks.size() > inventory.getMaxStackSize()) block.getWorld().dropItemNaturally(block.getLocation(), cleanStacks.remove(cleanStacks.size() - 1));
 
-        inventory.setContents(cleanStacks.toArray(new ItemStack[inventory.getSize()]));
+        inventory.setContents(cleanStacks.toArray(ItemStack[]::new));
         block.getState().update(true);
+        return true;
+    }
+
+    public static boolean handlePlayer(final Player player) {
+        final Inventory inventory = player.getInventory();
+        final List<ItemStack> stacks = Arrays.stream(inventory.getStorageContents()).collect(Collectors.toList());
+
+        final List<ItemStack> hotbarStacks = stacks.subList(0, 9);
+        final List<ItemStack> storageStacks = stacks.subList(9, stacks.size());
+        final List<ItemStack> sortedStacks = ChestOverflow.sortedItemStacks(ChestOverflow.distinctItemStacks((storageStacks)));
+        final List<ItemStack> cleanStacks = Stream.concat(hotbarStacks.stream(), sortedStacks.stream()).collect(Collectors.toList());
+
+        while(cleanStacks.size() > inventory.getMaxStackSize()) player.getWorld().dropItemNaturally(player.getLocation(), cleanStacks.remove(cleanStacks.size() - 1));
+        inventory.setStorageContents(cleanStacks.toArray(ItemStack[]::new));
         return true;
     }
 

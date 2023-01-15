@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '18'
+          java-version: '17'
           cache: 'maven'
       - run: mvn install
       - uses: "marvinpinto/action-automatic-releases@latest"

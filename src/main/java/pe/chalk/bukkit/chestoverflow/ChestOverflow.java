@@ -21,7 +21,7 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.Chest;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -29,6 +29,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.*;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
@@ -46,8 +47,6 @@ public class ChestOverflow extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event){
-        if(event.isCancelled()) return;
-
         final Player player = event.getPlayer();
         if(!player.hasPermission("chestoverflow.use")) return;
 
@@ -56,7 +55,7 @@ public class ChestOverflow extends JavaPlugin implements Listener {
 
         final Block block = event.getClickedBlock();
         if(block != null && ChestOverflow.handleChest(block, player)){
-            event.getPlayer().playSound(block.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.2f, 0.5f);
+            player.playSound(block.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.2f, 0.5f);
         }
     }
 
@@ -77,7 +76,7 @@ public class ChestOverflow extends JavaPlugin implements Listener {
 
     public static boolean handleChest(final Block block, final Player player){
         final Inventory inventory = getInventoryFromBlock(block, player);
-        if(inventory == null || inventory.getSize() <= 0 || inventory.getContents().length <= 0) return false;
+        if(inventory == null || inventory.getSize() <= 0 || inventory.getContents().length == 0) return false;
 
         final List<ItemStack> stacks = Arrays.stream(inventory.getContents()).collect(Collectors.<ItemStack>toList());
         final List<ItemStack> cleanStacks = ChestOverflow.sortedItemStacks(ChestOverflow.distinctItemStacks(stacks));
@@ -113,13 +112,30 @@ public class ChestOverflow extends JavaPlugin implements Listener {
         return distinctStacks;
     }
 
-    @SuppressWarnings("deprecation")
-    public static final Comparator<ItemStack> COMPARATOR = Comparator.comparing(ItemStack::getType)
-            .thenComparingInt(stack -> -stack.getEnchantments().values().stream().mapToInt(level -> level * level).sum())
-            .thenComparing(stack -> stack.getItemMeta() != null && stack.getItemMeta().hasDisplayName() ? stack.getItemMeta().getDisplayName() : null, Comparator.nullsLast(String::compareTo))
-            .thenComparingInt(stack -> stack.getItemMeta() != null && stack.getItemMeta().hasLore() && stack.getItemMeta().getLore() != null ? stack.getItemMeta().getLore().size() : Integer.MAX_VALUE)
-            .thenComparingInt(ItemStack::getDurability)
-            .thenComparingInt(stack -> -stack.getAmount());
+    public static final Comparator<String> ENCHANTM_COMPARATOR = Comparator
+            .<String>comparingInt(e -> e.contains("curse") ? 1 : 0)
+            .thenComparing(String::compareTo);
+
+    public static final Comparator<Map<Enchantment, Integer>> ENCHANTS_COMPARATOR = Comparator
+            .comparing(Map<Enchantment, Integer>::size, Comparator.reverseOrder())
+            .thenComparing(enchants -> enchants.values().stream().mapToInt(level -> level * level).sum(), Comparator.reverseOrder())
+            .thenComparing(enchants -> enchants.keySet().stream().map(enchant -> enchant.getKey().toString()).sorted(ENCHANTM_COMPARATOR).collect(Collectors.joining(",")));
+
+    public static final Comparator<List<String>> LORE_COMPARATOR = Comparator
+            .comparing(List<String>::size, Comparator.reverseOrder())
+            .thenComparing(list -> String.join("\n", list));
+
+    public static final Comparator<ItemMeta> META_COMPARATOR = Comparator
+            .comparing(ItemMeta::getEnchants, ENCHANTS_COMPARATOR)
+            .thenComparing(ItemHelper::getStoredEnchants, ENCHANTS_COMPARATOR)
+            .thenComparing(ItemHelper::getDisplayName, Comparator.nullsLast(String::compareTo))
+            .thenComparing(ItemHelper::getLore, Comparator.nullsLast(LORE_COMPARATOR))
+            .thenComparing(ItemHelper::getDamage, Comparator.nullsFirst(Integer::compareTo));
+
+    public static final Comparator<ItemStack> COMPARATOR = Comparator
+            .comparing(ItemStack::getType)
+            .thenComparing(ItemStack::getItemMeta, Comparator.nullsLast(META_COMPARATOR))
+            .thenComparing(ItemStack::getAmount, Comparator.reverseOrder());
 
     public static List<ItemStack> sortedItemStacks(final List<ItemStack> stacks){
         return stacks.stream().sorted(ChestOverflow.COMPARATOR).collect(Collectors.toList());

@@ -13,8 +13,11 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * @author Chalk <chalkpe@gmail.com>
@@ -52,15 +55,32 @@ public class ItemHelper {
         return meta.hasLore() ? meta.getLore() : null;
     }
 
-    public static ItemStack getStack(ItemStack stack, int amount) {
-        final ItemStack s = stack.clone();
-        s.setAmount(amount);
-        return s;
-    }
-
     public static void dropItems(final List<ItemStack> stacks, int maxSize, final World world, final Location location) {
         while (stacks.size() > maxSize)
             world.dropItemNaturally(location, stacks.remove(stacks.size() - 1));
     }
 
+    public static ItemStack findKey(Collection<ItemStack> stacks, ItemStack stack) {
+        return stacks.stream().filter(stack::isSimilar).findFirst().orElse(stack);
+    }
+
+    public static ItemStack generateAmountStack(ItemStack stack, int amount) {
+        final ItemStack s = stack.clone();
+        s.setAmount(amount);
+        return s;
+    }
+
+    public static Stream<ItemStack> generateStacks(Map.Entry<ItemStack, Integer> entry) {
+        final ItemStack stack = entry.getKey();
+        final int amount = entry.getValue();
+        final int maxStackSize = stack.getMaxStackSize();
+
+        final int bundles = amount / maxStackSize;
+        final int remaining = amount % maxStackSize;
+
+        return Stream.concat(
+                IntStream.range(0, bundles).mapToObj(i -> generateAmountStack(stack, maxStackSize)),
+                remaining > 0 ? Stream.of(generateAmountStack(stack, remaining)) : Stream.empty()
+        );
+    }
 }

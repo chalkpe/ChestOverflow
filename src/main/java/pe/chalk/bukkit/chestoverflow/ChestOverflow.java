@@ -37,6 +37,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -104,26 +106,22 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
         return true;
     }
 
+    public static final BiConsumer<Map<ItemStack, Integer>, Map.Entry<ItemStack, Integer>> SIMILAR_ACCUMULATOR = (map, entry) ->
+            map.merge(ItemHelper.findKey(map.keySet(), entry.getKey()), entry.getValue(), Integer::sum);
+
+    public static final Collector<ItemStack, Map<ItemStack, Integer>, List<ItemStack>> DISTINCT_COLLECTOR = Collector.of(
+            HashMap::new,
+            (map, stack) -> SIMILAR_ACCUMULATOR.accept(map, Map.entry(stack, stack.getAmount())),
+            (mapA, mapB) -> {
+                final Map<ItemStack, Integer> result = new HashMap<>();
+                Stream.of(mapA, mapB).forEach(map -> map.entrySet().forEach(entry -> SIMILAR_ACCUMULATOR.accept(result, entry)));
+                return result;
+            },
+            map -> map.entrySet().stream().flatMap(ItemHelper::generateStacks).toList()
+    );
+
     public static List<ItemStack> distinctItemStacks(final List<ItemStack> stacks) {
-        final List<ItemStack> distinctStacks = new ArrayList<>();
-        stacks.stream().filter(Objects::nonNull).forEach((final ItemStack stack) ->
-                distinctStacks.stream()
-                        .filter(Objects::nonNull)
-                        .filter(s -> s.getMaxStackSize() > 1)
-                        .filter(s -> s.getMaxStackSize() > s.getAmount())
-                        .filter(s -> s.isSimilar(stack))
-                        .findFirst()
-                        .ifPresentOrElse(similarStack -> {
-                            int maxSize = stack.getMaxStackSize();
-                            int totalAmount = stack.getAmount() + similarStack.getAmount();
-                            while (totalAmount > maxSize) {
-                                totalAmount -= maxSize;
-                                distinctStacks.add(ItemHelper.getStack(stack, maxSize));
-                            }
-                            similarStack.setAmount(totalAmount);
-                        }, () -> distinctStacks.add(stack.clone()))
-        );
-        return distinctStacks;
+        return stacks.stream().filter(Objects::nonNull).collect(DISTINCT_COLLECTOR);
     }
 
     public static final Comparator<String> ENCHANTM_COMPARATOR = Comparator

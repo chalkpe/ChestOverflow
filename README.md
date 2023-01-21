@@ -1,13 +1,17 @@
 # ChestOverflow
+
 Chest sorting plugin for Bukkit
 
 ## Usage
+
 Attack any chest-like blocks with your empty hands.
 
 ## Commands
+
 `/sort`: Sort the inventory of current player.
 
 ## Permissions
+
 `chestoverflow.use` allows the player to use full function.
 
 ## Screenshots
@@ -22,15 +26,13 @@ Attack any chest-like blocks with your empty hands.
 ![Player inventory before sort](https://user-images.githubusercontent.com/9481405/213879947-72895263-e42c-44c9-8fdf-dfe59e764d8d.png)
 ![Player inventory after sort](https://user-images.githubusercontent.com/9481405/213879954-13947f13-2b96-4914-a634-921f772bb333.png)
 
-
-## Video preview
-- [Watch on YouTube](https://youtu.be/I9QmjU1ncyc)
-
 ## Requirements
+
 - Java 1.8+
 - Bukkit 1.8+
 
 ## License
+
 ```
 Copyright (C)  2016-2023 ChalkPE
 

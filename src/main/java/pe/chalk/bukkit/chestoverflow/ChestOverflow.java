@@ -121,11 +121,7 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
     public static final Collector<ItemStack, Map<ItemStack, Integer>, List<ItemStack>> DISTINCT_COLLECTOR = Collector.of(
             HashMap::new,
             (map, stack) -> SIMILAR_ACCUMULATOR.accept(map, Map.entry(stack, stack.getAmount())),
-            (mapA, mapB) -> {
-                final Map<ItemStack, Integer> result = new HashMap<>();
-                Stream.of(mapA, mapB).forEach(map -> map.entrySet().forEach(entry -> SIMILAR_ACCUMULATOR.accept(result, entry)));
-                return result;
-            },
+            (mapA, mapB) -> new HashMap<>() {{ Stream.of(mapA, mapB).forEach(map -> map.entrySet().forEach(entry -> SIMILAR_ACCUMULATOR.accept(this, entry))); }},
             map -> map.entrySet().stream().flatMap(ItemHelper::generateStacks).toList()
     );
 

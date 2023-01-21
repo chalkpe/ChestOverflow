@@ -5,7 +5,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.*;
@@ -24,19 +23,10 @@ import java.util.stream.Stream;
  * @since 2023-01-16
  */
 public class ItemHelper {
-    public static boolean hasNormalInventory(final Block block) {
-        final BlockState state = block.getState();
-        if (!(state instanceof InventoryHolder holder)) return false;
-
-        final Inventory inventory = holder.getInventory();
-        return !(inventory instanceof FurnaceInventory || inventory instanceof BrewerInventory || inventory instanceof BeaconInventory);
-    }
-
     public static Inventory getInventoryFromBlock(final Block block, final Player player) {
         if (block == null) return null;
-        if (block.getType() == Material.ENDER_CHEST && player != null) return player.getEnderChest();
-        if (block.getState() instanceof InventoryHolder holder && ItemHelper.hasNormalInventory(block)) return holder.getInventory();
-        return null;
+        if (block.getType() == Material.ENDER_CHEST) return player.getEnderChest();
+        return block.getState() instanceof InventoryHolder holder && holder.getInventory().getMaxStackSize() > 9 ? holder.getInventory() : null;
     }
 
     public static Map<Enchantment, Integer> getStoredEnchants(ItemMeta meta) {
@@ -82,5 +72,16 @@ public class ItemHelper {
                 IntStream.range(0, bundles).mapToObj(i -> generateAmountStack(stack, maxStackSize)),
                 remaining > 0 ? Stream.of(generateAmountStack(stack, remaining)) : Stream.empty()
         );
+    }
+
+    public static void moveAmount(ItemStack from, ItemStack to) {
+        if (from == null || !from.isSimilar(to)) return;
+        if (to.getAmount() == to.getMaxStackSize()) return;
+
+        final int maxMovingAmount = to.getMaxStackSize() - to.getAmount();
+        final int movingAmount = Math.min(from.getAmount(), maxMovingAmount);
+
+        to.setAmount(to.getAmount() + movingAmount);
+        from.setAmount(from.getAmount() - movingAmount);
     }
 }

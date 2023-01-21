@@ -90,6 +90,15 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
         return true;
     }
 
+    public static BiConsumer<List<ItemStack>, List<ItemStack>> HOTBAR_FILLER = (hotbar, storage) ->
+            hotbar.stream()
+                    .filter(Objects::nonNull)
+                    .forEach(slot -> storage.stream()
+                            .filter(slot::isSimilar)
+                            .filter(inv -> inv.getAmount() > 0)
+                            .takeWhile(inv -> slot.getAmount() < slot.getMaxStackSize())
+                            .forEach(inv -> ItemHelper.moveAmount(inv, slot)));
+
     public static boolean handlePlayer(final Player player) {
         final Inventory inventory = player.getInventory();
         if (inventory.getSize() <= 0 || inventory.getStorageContents().length == 0) return false;
@@ -97,7 +106,9 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
         final List<ItemStack> stacks = Arrays.stream(inventory.getStorageContents()).collect(Collectors.toList());
         final List<ItemStack> hotbarStacks = stacks.subList(0, 9);
         final List<ItemStack> storageStacks = stacks.subList(9, stacks.size());
-        final List<ItemStack> sortedStacks = ChestOverflow.sortedItemStacks(ChestOverflow.distinctItemStacks((storageStacks)));
+
+        HOTBAR_FILLER.accept(hotbarStacks, storageStacks);
+        final List<ItemStack> sortedStacks = ChestOverflow.sortedItemStacks(ChestOverflow.distinctItemStacks(storageStacks));
         final List<ItemStack> cleanStacks = Stream.concat(hotbarStacks.stream(), sortedStacks.stream()).collect(Collectors.toList());
 
         ItemHelper.dropItems(cleanStacks, inventory.getMaxStackSize(), player.getWorld(), player.getLocation());
@@ -121,7 +132,10 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
     );
 
     public static List<ItemStack> distinctItemStacks(final List<ItemStack> stacks) {
-        return stacks.stream().filter(Objects::nonNull).collect(DISTINCT_COLLECTOR);
+        return stacks.stream()
+                .filter(Objects::nonNull)
+                .filter(stack -> stack.getAmount() > 0)
+                .collect(DISTINCT_COLLECTOR);
     }
 
     public static final Comparator<String> ENCHANTM_COMPARATOR = Comparator

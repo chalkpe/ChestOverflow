@@ -81,10 +81,9 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
         final Inventory inventory = ItemHelper.getInventoryFromBlock(block, player);
         if (inventory == null || inventory.getSize() <= 0 || inventory.getContents().length == 0) return false;
 
-        final List<ItemStack> stacks = Arrays.stream(inventory.getContents()).collect(Collectors.toList());
+        final List<ItemStack> stacks = Arrays.stream(inventory.getContents()).toList();
         final List<ItemStack> cleanStacks = ChestOverflow.sortedItemStacks(ChestOverflow.distinctItemStacks(stacks));
 
-        ItemHelper.dropItems(cleanStacks, inventory.getMaxStackSize(), block.getWorld(), block.getLocation());
         inventory.setContents(cleanStacks.toArray(ItemStack[]::new));
         block.getState().update(true);
         return true;
@@ -103,15 +102,14 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
         final Inventory inventory = player.getInventory();
         if (inventory.getSize() <= 0 || inventory.getStorageContents().length == 0) return false;
 
-        final List<ItemStack> stacks = Arrays.stream(inventory.getStorageContents()).collect(Collectors.toList());
+        final List<ItemStack> stacks = Arrays.stream(inventory.getStorageContents()).toList();
         final List<ItemStack> hotbarStacks = stacks.subList(0, 9);
         final List<ItemStack> storageStacks = stacks.subList(9, stacks.size());
 
         HOTBAR_FILLER.accept(hotbarStacks, storageStacks);
         final List<ItemStack> sortedStacks = ChestOverflow.sortedItemStacks(ChestOverflow.distinctItemStacks(storageStacks));
-        final List<ItemStack> cleanStacks = Stream.concat(hotbarStacks.stream(), sortedStacks.stream()).collect(Collectors.toList());
+        final List<ItemStack> cleanStacks = Stream.concat(hotbarStacks.stream(), sortedStacks.stream()).toList();
 
-        ItemHelper.dropItems(cleanStacks, inventory.getMaxStackSize(), player.getWorld(), player.getLocation());
         inventory.setStorageContents(cleanStacks.toArray(ItemStack[]::new));
         player.updateInventory();
         return true;

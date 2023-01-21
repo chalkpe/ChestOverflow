@@ -5,7 +5,7 @@ Chest sorting plugin for Bukkit
 Attack any chest-like blocks with your empty hands.
 
 ## Commands
-None
+`/sort`: Sort the inventory of current player.
 
 ## Permissions
 `chestoverflow.use` allows the player to use full function.

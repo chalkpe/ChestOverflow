@@ -45,11 +45,6 @@ public class ItemHelper {
         return meta.hasLore() ? meta.getLore() : null;
     }
 
-    public static void dropItems(final List<ItemStack> stacks, int maxSize, final World world, final Location location) {
-        while (stacks.size() > maxSize)
-            world.dropItemNaturally(location, stacks.remove(stacks.size() - 1));
-    }
-
     public static ItemStack findKey(Collection<ItemStack> stacks, ItemStack stack) {
         return stacks.stream().filter(stack::isSimilar).findFirst().orElse(stack);
     }

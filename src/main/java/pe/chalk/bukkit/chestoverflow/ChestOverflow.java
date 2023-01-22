@@ -85,7 +85,6 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
         final List<ItemStack> cleanStacks = ChestOverflow.sortedItemStacks(ChestOverflow.distinctItemStacks(stacks));
 
         inventory.setContents(cleanStacks.toArray(ItemStack[]::new));
-        block.getState().update(true);
         return true;
     }
 
@@ -111,7 +110,6 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
         final List<ItemStack> cleanStacks = Stream.concat(hotbarStacks.stream(), sortedStacks.stream()).toList();
 
         inventory.setStorageContents(cleanStacks.toArray(ItemStack[]::new));
-        player.updateInventory();
         return true;
     }
 

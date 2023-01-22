@@ -1,6 +1,5 @@
 package pe.chalk.bukkit.chestoverflow;
 
-import com.google.common.collect.ImmutableMap;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
@@ -21,7 +20,7 @@ import java.util.stream.Stream;
  * @since 2023-01-16
  */
 public class ItemHelper {
-    public static List<Class<? extends Inventory>> INVALID_INVENTORY_CLASS = List.of(FurnaceInventory.class, BrewerInventory.class, BeaconInventory.class);
+    public static final List<Class<? extends Inventory>> INVALID_INVENTORY_CLASS = List.of(FurnaceInventory.class, BrewerInventory.class, BeaconInventory.class);
 
     public static Inventory getInventoryFromBlock(final Block block, final Player player) {
         if (block == null) return null;
@@ -33,7 +32,7 @@ public class ItemHelper {
     }
 
     public static Map<Enchantment, Integer> getStoredEnchants(ItemMeta meta) {
-        return meta instanceof EnchantmentStorageMeta ? ((EnchantmentStorageMeta) meta).getStoredEnchants() : ImmutableMap.of();
+        return meta instanceof EnchantmentStorageMeta ? ((EnchantmentStorageMeta) meta).getStoredEnchants() : Map.of();
     }
 
     public static Integer getDamage(ItemMeta meta) {

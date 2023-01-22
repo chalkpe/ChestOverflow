@@ -1,9 +1,7 @@
 package pe.chalk.bukkit.chestoverflow;
 
 import com.google.common.collect.ImmutableMap;
-import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -23,10 +21,15 @@ import java.util.stream.Stream;
  * @since 2023-01-16
  */
 public class ItemHelper {
+    public static List<Class<? extends Inventory>> INVALID_INVENTORY_CLASS = List.of(FurnaceInventory.class, BrewerInventory.class, BeaconInventory.class);
+
     public static Inventory getInventoryFromBlock(final Block block, final Player player) {
         if (block == null) return null;
         if (block.getType() == Material.ENDER_CHEST) return player.getEnderChest();
-        return block.getState() instanceof InventoryHolder holder && holder.getInventory().getMaxStackSize() > 9 ? holder.getInventory() : null;
+        if (!(block.getState() instanceof InventoryHolder inventoryHolder)) return null;
+
+        final Inventory inventory = inventoryHolder.getInventory();
+        return INVALID_INVENTORY_CLASS.contains(inventory.getClass()) ? null : inventory;
     }
 
     public static Map<Enchantment, Integer> getStoredEnchants(ItemMeta meta) {

@@ -2,6 +2,7 @@ package pe.chalk.bukkit.chestoverflow;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.Container;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.*;
@@ -25,9 +26,9 @@ public class ItemHelper {
     public static Inventory getInventoryFromBlock(final Block block, final Player player) {
         if (block == null) return null;
         if (block.getType() == Material.ENDER_CHEST) return player.getEnderChest();
-        if (!(block.getState() instanceof InventoryHolder inventoryHolder)) return null;
+        if (!(block.getState() instanceof Container container)) return null;
 
-        final Inventory inventory = inventoryHolder.getInventory();
+        final Inventory inventory = container.getInventory();
         return INVALID_INVENTORY_CLASS.contains(inventory.getClass()) ? null : inventory;
     }
 

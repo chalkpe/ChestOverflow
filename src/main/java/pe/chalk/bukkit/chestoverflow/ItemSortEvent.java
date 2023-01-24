@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 
 public class ItemSortEvent extends Event implements Cancellable {
-    private static final HandlerList LIST = new HandlerList();
+    private static final HandlerList handlers = new HandlerList();
 
     private final Inventory inventory;
     private final Player targetPlayer;
@@ -34,7 +34,13 @@ public class ItemSortEvent extends Event implements Cancellable {
     @NotNull
     @Override
     public HandlerList getHandlers() {
-        return LIST;
+        return handlers;
+    }
+
+    @SuppressWarnings("unused")
+    @NotNull
+    public static HandlerList getHandlerList() {
+        return handlers;
     }
 
     @Override
@@ -55,7 +61,6 @@ public class ItemSortEvent extends Event implements Cancellable {
         return contents;
     }
 
-    @SuppressWarnings("unused")
     public void setContents(ItemStack[] contents) {
         this.contents = contents;
     }

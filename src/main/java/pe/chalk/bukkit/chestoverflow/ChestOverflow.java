@@ -60,7 +60,7 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
 
         Optional.ofNullable(handlePlayer(player))
                 .filter(this::triggerItemSortEvent)
-                .ifPresent(ItemSorter.CHEST_EVENT_HANDLER);
+                .ifPresent(ItemSorter.DROP_EXCEEDS.andThen(ItemSorter.UPDATE_CHEST));
         return true;
     }
 
@@ -72,7 +72,7 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
 
         Optional.ofNullable(handleChest(player, event.getClickedBlock()))
                 .filter(this::triggerItemSortEvent)
-                .ifPresent(ItemSorter.PLAYER_EVENT_HANDLER);
+                .ifPresent(ItemSorter.DROP_EXCEEDS.andThen(ItemSorter.UPDATE_PLAYER));
     }
 
     public boolean triggerItemSortEvent(final @NotNull ItemSortEvent event) {

@@ -15,12 +15,25 @@ import java.util.stream.Stream;
 public final class ItemSorter {
     private ItemSorter() {}
 
-    public static final Consumer<ItemSortEvent> PLAYER_EVENT_HANDLER = event -> {
+    public static final Consumer<ItemSortEvent> DROP_EXCEEDS = event -> {
+        final var maxSize = event.getInventory().getSize();
+        final var contents = event.getContents();
+        if (contents.length <= maxSize) return;
+
+        final var location = event.getLocation();
+        final var world = event.getTargetPlayer().getWorld();
+        final var stacks = new ArrayList<>(Arrays.asList(contents));
+
+        while (stacks.size() > maxSize) world.dropItemNaturally(location, stacks.remove(stacks.size() - 1));
+        event.setContents(stacks.toArray(ItemStack[]::new));
+    };
+
+    public static final Consumer<ItemSortEvent> UPDATE_PLAYER = event -> {
         event.getInventory().setStorageContents(event.getContents());
         event.getTargetPlayer().updateInventory();
     };
 
-    public static final Consumer<ItemSortEvent> CHEST_EVENT_HANDLER = event -> {
+    public static final Consumer<ItemSortEvent> UPDATE_CHEST = event -> {
         event.getInventory().clear();
         event.getInventory().addItem(event.getContents());
     };

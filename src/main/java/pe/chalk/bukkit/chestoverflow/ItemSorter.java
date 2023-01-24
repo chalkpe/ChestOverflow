@@ -35,7 +35,7 @@ public final class ItemSorter {
 
     public static final Consumer<ItemSortEvent> UPDATE_CHEST = event -> {
         event.getInventory().clear();
-        event.getInventory().addItem(event.getContents());
+        event.getInventory().setContents(event.getContents());
     };
 
     public static BiConsumer<List<ItemStack>, List<ItemStack>> HOTBAR_FILLER = (hotbar, storage) ->

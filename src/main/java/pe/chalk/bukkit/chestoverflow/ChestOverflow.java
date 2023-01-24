@@ -17,14 +17,11 @@
 
 package pe.chalk.bukkit.chestoverflow;
 
-import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
-import org.bukkit.block.Container;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.PluginCommand;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -51,9 +48,7 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
     @Override
     public void onEnable() {
         this.getServer().getPluginManager().registerEvents(this, this);
-
-        final PluginCommand command = this.getCommand("sort");
-        if (command != null) command.setExecutor(this);
+        Optional.ofNullable(this.getCommand("sort")).ifPresent(cmd -> cmd.setExecutor(this));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -62,32 +57,47 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
         if (!player.hasPermission("chestoverflow.use")) return;
         if (event.hasItem() || event.getAction() != Action.LEFT_CLICK_BLOCK) return;
 
-        final Block block = event.getClickedBlock();
-        if (block != null && handleChest(block, player)) playSound(player, block.getLocation());
+        Optional.ofNullable(handleChest(event.getClickedBlock(), player)).ifPresent(sortEvent -> {
+            this.getServer().getPluginManager().callEvent(sortEvent);
+            if (sortEvent.isCancelled()) return;
+
+            sortEvent.getInventory().clear();
+            sortEvent.getInventory().addItem(sortEvent.getStacks());
+        });
     }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!command.getName().equals("sort")) return true;
         if (!(sender instanceof Player player)) return true;
-        if (handlePlayer(player)) playSound(player, player.getLocation());
+        
+        Optional.ofNullable(handlePlayer(player)).ifPresent(sortEvent -> {
+            this.getServer().getPluginManager().callEvent(sortEvent);
+            if (sortEvent.isCancelled()) return;
+
+            sortEvent.getInventory().setStorageContents(sortEvent.getStacks());
+            sortEvent.getTargetPlayer().updateInventory();
+        });
         return true;
     }
 
-    public static void playSound(final Player player, final Location location) {
-        player.playSound(location, Sound.ENTITY_ARROW_HIT_PLAYER, 0.2f, 0.5f);
+    @EventHandler
+    public void onChestSort(final ChestSortEvent event) {
+        if (event.isCancelled()) return;
+        event.getTargetPlayer().playSound(event.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.2f, 0.5f);
     }
 
-    public static boolean handleChest(final Block block, final Player player) {
+    public ChestSortEvent handleChest(final Block block, final Player player) {
         final Inventory inventory = ItemHelper.getInventoryFromBlock(block, player);
-        if (inventory == null || inventory.getSize() <= 0 || inventory.getContents().length == 0) return false;
+        if (inventory == null || inventory.getSize() == 0) return null;
 
-        final List<ItemStack> stacks = Arrays.stream(inventory.getContents()).toList();
+        final ItemStack[] contents = inventory.getContents();
+        if (contents.length == 0) return null;
+
+        final List<ItemStack> stacks = Arrays.stream(contents).toList();
         final List<ItemStack> cleanStacks = ChestOverflow.sortedItemStacks(ChestOverflow.distinctItemStacks(stacks));
 
-        inventory.clear();
-        inventory.addItem(cleanStacks.toArray(ItemStack[]::new));
-        return true;
+        return new ChestSortEvent(inventory, cleanStacks.toArray(ItemStack[]::new), player, block);
     }
 
     public static BiConsumer<List<ItemStack>, List<ItemStack>> HOTBAR_FILLER = (hotbar, storage) ->
@@ -99,11 +109,14 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
                             .takeWhile(inv -> slot.getAmount() < slot.getMaxStackSize())
                             .forEach(inv -> ItemHelper.moveAmount(inv, slot)));
 
-    public static boolean handlePlayer(final Player player) {
+    public static ChestSortEvent handlePlayer(final Player player) {
         final Inventory inventory = player.getInventory();
-        if (inventory.getSize() <= 0 || inventory.getStorageContents().length == 0) return false;
+        if (inventory.getSize() == 0) return null;
 
-        final List<ItemStack> stacks = Arrays.stream(inventory.getStorageContents()).toList();
+        final ItemStack[] contents = inventory.getStorageContents();
+        if (contents.length == 0) return null;
+
+        final List<ItemStack> stacks = Arrays.stream(contents).toList();
         final List<ItemStack> hotbarStacks = stacks.subList(0, 9);
         final List<ItemStack> storageStacks = stacks.subList(9, stacks.size());
 
@@ -111,9 +124,7 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
         final List<ItemStack> sortedStacks = ChestOverflow.sortedItemStacks(ChestOverflow.distinctItemStacks(storageStacks));
         final List<ItemStack> cleanStacks = Stream.concat(hotbarStacks.stream(), sortedStacks.stream()).toList();
 
-        inventory.setStorageContents(cleanStacks.toArray(ItemStack[]::new));
-        player.updateInventory();
-        return true;
+        return new ChestSortEvent(inventory, cleanStacks.toArray(ItemStack[]::new), player);
     }
 
     public static final BiConsumer<Map<ItemStack, Integer>, Map.Entry<ItemStack, Integer>> SIMILAR_ACCUMULATOR = (map, entry) ->

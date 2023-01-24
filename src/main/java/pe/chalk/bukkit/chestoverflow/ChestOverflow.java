@@ -17,6 +17,7 @@
 
 package pe.chalk.bukkit.chestoverflow;
 
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
@@ -45,6 +46,7 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
     public void onEnable() {
         this.getServer().getPluginManager().registerEvents(this, this);
         Optional.ofNullable(this.getCommand("sort")).ifPresent(cmd -> cmd.setExecutor(this));
+        new Metrics(this, 17511);
     }
 
     @EventHandler

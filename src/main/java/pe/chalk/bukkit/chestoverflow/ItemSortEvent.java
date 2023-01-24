@@ -9,27 +9,24 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class ChestSortEvent extends Event implements Cancellable {
+public class ItemSortEvent extends Event implements Cancellable {
     private static final HandlerList LIST = new HandlerList();
 
     private final Inventory inventory;
     private final Player targetPlayer;
-    private final Block targetBlock;
+    private final @Nullable Block targetBlock;
 
-    private ItemStack[] stacks;
+    private ItemStack[] contents;
     private boolean cancelled = false;
 
-    public ChestSortEvent(Inventory inventory, ItemStack[] stacks, Player targetPlayer) {
-        this(inventory, stacks, targetPlayer, null);
-    }
-
-    public ChestSortEvent(Inventory inventory, ItemStack[] stacks, Player targetPlayer, Block targetBlock) {
+    public ItemSortEvent(Inventory inventory, ItemStack[] contents, Player targetPlayer, @Nullable Block targetBlock) {
         super();
         this.inventory = inventory;
-        this.stacks = stacks;
+        this.contents = contents;
         this.targetPlayer = targetPlayer;
         this.targetBlock = targetBlock;
     }
@@ -54,12 +51,13 @@ public class ChestSortEvent extends Event implements Cancellable {
         return inventory;
     }
 
-    public ItemStack[] getStacks() {
-        return stacks;
+    public ItemStack[] getContents() {
+        return contents;
     }
 
-    public void setStacks(ItemStack[] stacks) {
-        this.stacks = stacks;
+    @SuppressWarnings("unused")
+    public void setContents(ItemStack[] contents) {
+        this.contents = contents;
     }
 
     public Player getTargetPlayer() {

@@ -7,11 +7,24 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ItemSorter {
+public final class ItemSorter {
+    private ItemSorter() {}
+
+    public static final Consumer<ItemSortEvent> PLAYER_EVENT_HANDLER = event -> {
+        event.getInventory().setStorageContents(event.getContents());
+        event.getTargetPlayer().updateInventory();
+    };
+
+    public static final Consumer<ItemSortEvent> CHEST_EVENT_HANDLER = event -> {
+        event.getInventory().clear();
+        event.getInventory().addItem(event.getContents());
+    };
+
     public static BiConsumer<List<ItemStack>, List<ItemStack>> HOTBAR_FILLER = (hotbar, storage) ->
             hotbar.stream()
                     .filter(Objects::nonNull)

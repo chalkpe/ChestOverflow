@@ -47,18 +47,20 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
         Optional.ofNullable(this.getCommand("sort")).ifPresent(cmd -> cmd.setExecutor(this));
     }
 
+    @EventHandler
+    public void onItemSort(final @NotNull ItemSortEvent event) {
+        if (event.isCancelled()) return;
+        event.getTargetPlayer().playSound(event.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.2f, 0.5f);
+    }
+
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!command.getName().equals("sort")) return true;
         if (!(sender instanceof Player player)) return true;
 
-        Optional.ofNullable(handlePlayer(player)).ifPresent(sortEvent -> {
-            this.getServer().getPluginManager().callEvent(sortEvent);
-            if (sortEvent.isCancelled()) return;
-
-            sortEvent.getInventory().setStorageContents(sortEvent.getStacks());
-            sortEvent.getTargetPlayer().updateInventory();
-        });
+        Optional.ofNullable(handlePlayer(player))
+                .filter(this::triggerItemSortEvent)
+                .ifPresent(ItemSorter.CHEST_EVENT_HANDLER);
         return true;
     }
 
@@ -68,22 +70,17 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
         if (!player.hasPermission("chestoverflow.use")) return;
         if (event.hasItem() || event.getAction() != Action.LEFT_CLICK_BLOCK) return;
 
-        Optional.ofNullable(handleChest(event.getClickedBlock(), player)).ifPresent(sortEvent -> {
-            this.getServer().getPluginManager().callEvent(sortEvent);
-            if (sortEvent.isCancelled()) return;
-
-            sortEvent.getInventory().clear();
-            sortEvent.getInventory().addItem(sortEvent.getStacks());
-        });
+        Optional.ofNullable(handleChest(player, event.getClickedBlock()))
+                .filter(this::triggerItemSortEvent)
+                .ifPresent(ItemSorter.PLAYER_EVENT_HANDLER);
     }
 
-    @EventHandler
-    public void onChestSort(final @NotNull ChestSortEvent event) {
-        if (event.isCancelled()) return;
-        event.getTargetPlayer().playSound(event.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.2f, 0.5f);
+    public boolean triggerItemSortEvent(final @NotNull ItemSortEvent event) {
+        this.getServer().getPluginManager().callEvent(event);
+        return !event.isCancelled();
     }
 
-    public static @Nullable ChestSortEvent handlePlayer(final @NotNull Player player) {
+    public static @Nullable ItemSortEvent handlePlayer(final @NotNull Player player) {
         final Inventory inventory = player.getInventory();
         if (inventory.getSize() == 0) return null;
 
@@ -98,10 +95,10 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
         final List<ItemStack> sortedStacks = ItemSorter.sortedItemStacks(ItemSorter.distinctItemStacks(storageStacks));
         final List<ItemStack> cleanStacks = Stream.concat(hotbarStacks.stream(), sortedStacks.stream()).toList();
 
-        return new ChestSortEvent(inventory, cleanStacks.toArray(ItemStack[]::new), player);
+        return new ItemSortEvent(inventory, cleanStacks.toArray(ItemStack[]::new), player, null);
     }
 
-    public static @Nullable ChestSortEvent handleChest(final Block block, final Player player) {
+    public static @Nullable ItemSortEvent handleChest(final Player player, final Block block) {
         final Inventory inventory = ItemHelper.getInventoryFromBlock(block, player);
         if (inventory == null || inventory.getSize() == 0) return null;
 
@@ -111,6 +108,6 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
         final List<ItemStack> stacks = Arrays.stream(contents).toList();
         final List<ItemStack> cleanStacks = ItemSorter.sortedItemStacks(ItemSorter.distinctItemStacks(stacks));
 
-        return new ChestSortEvent(inventory, cleanStacks.toArray(ItemStack[]::new), player, block);
+        return new ItemSortEvent(inventory, cleanStacks.toArray(ItemStack[]::new), player, block);
     }
 }

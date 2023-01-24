@@ -20,7 +20,9 @@ import java.util.stream.Stream;
  * @author Chalk <chalkpe@gmail.com>
  * @since 2023-01-16
  */
-public class ItemHelper {
+public final class ItemHelper {
+    private ItemHelper() {}
+
     public static final List<Class<? extends Inventory>> INVALID_INVENTORY_CLASS = List.of(FurnaceInventory.class, BrewerInventory.class, BeaconInventory.class);
 
     public static Inventory getInventoryFromBlock(final Block block, final Player player) {

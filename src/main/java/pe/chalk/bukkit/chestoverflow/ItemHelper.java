@@ -61,9 +61,12 @@ public final class ItemHelper {
     }
 
     public static Stream<ItemStack> generateStacks(Map.Entry<ItemStack, Integer> entry) {
+        return generateStacks(entry, entry.getKey().getMaxStackSize());
+    }
+
+    public static Stream<ItemStack> generateStacks(Map.Entry<ItemStack, Integer> entry, int maxStackSize) {
         final ItemStack stack = entry.getKey();
         final int amount = entry.getValue();
-        final int maxStackSize = stack.getMaxStackSize();
 
         final int bundles = amount / maxStackSize;
         final int remaining = amount % maxStackSize;

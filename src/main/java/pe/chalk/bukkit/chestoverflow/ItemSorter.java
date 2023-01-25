@@ -16,7 +16,7 @@ public final class ItemSorter {
     private ItemSorter() {}
 
     public static final Consumer<ItemSortEvent> DROP_EXCEEDS = event -> {
-        final var maxSize = event.getInventory().getSize();
+        final var maxSize = event.getInventorySize();
         final var contents = event.getContents();
         if (contents.length <= maxSize) return;
 

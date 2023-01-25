@@ -74,8 +74,14 @@ public class ItemSortEvent extends Event implements Cancellable {
     }
 
     public Location getLocation() {
-        return this.getTargetBlock()
-                .map(Block::getLocation)
-                .orElseGet(() -> this.getTargetPlayer().getLocation());
+        return this.getTargetBlock().map(Block::getLocation).orElseGet(() -> this.getTargetPlayer().getLocation());
+    }
+
+    public boolean isPlayerInventory() {
+        return this.getTargetBlock().isEmpty();
+    }
+
+    public int getInventorySize() {
+        return this.isPlayerInventory() ? 36 : this.getInventory().getSize();
     }
 }

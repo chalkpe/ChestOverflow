@@ -31,7 +31,7 @@ public final class ItemHelper {
         if (!(block.getState() instanceof Container container)) return null;
 
         final Inventory inventory = container.getInventory();
-        return INVALID_INVENTORY_CLASS.contains(inventory.getClass()) ? null : inventory;
+        return INVALID_INVENTORY_CLASS.stream().anyMatch(i -> i.isInstance(inventory)) ? null : inventory;
     }
 
     public static Map<Enchantment, Integer> getStoredEnchants(ItemMeta meta) {

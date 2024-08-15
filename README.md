@@ -29,12 +29,12 @@ Attack any chest-like blocks with your empty hands.
 ## Tested versions
 
 - Java: 8 - 17
-- Bukkit: 1.8 - 1.19
+- Bukkit: 1.8 - 1.20.6
 
 ## License
 
 ```
-Copyright (C)  2016-2023 ChalkPE
+Copyright (C)  2016-2024 ChalkPE
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published

@@ -30,7 +30,6 @@ public final class ItemSorter {
 
     public static final Consumer<ItemSortEvent> UPDATE_PLAYER = event -> {
         event.getInventory().setStorageContents(event.getContents());
-        event.getTargetPlayer().updateInventory();
     };
 
     public static final Consumer<ItemSortEvent> UPDATE_CHEST = event -> {

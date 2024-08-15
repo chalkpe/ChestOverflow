@@ -18,6 +18,7 @@
 package pe.chalk.bukkit.chestoverflow;
 
 import org.bstats.bukkit.Metrics;
+import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
@@ -28,6 +29,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.*;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -77,6 +82,27 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
                 .ifPresent(ItemSorter.DROP_EXCEEDS.andThen(ItemSorter.UPDATE_CHEST));
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onInventoryClick(@NotNull final InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        if (!player.hasPermission("chestoverflow.use")) return;
+
+        if (!event.isLeftClick()) return;
+        if (event.getClick() != ClickType.DOUBLE_CLICK) return;
+        if (event.getAction() != InventoryAction.NOTHING) return;
+
+        final Inventory inventory = event.getClickedInventory();
+        if (inventory != null && inventory.getType() == InventoryType.PLAYER) {
+            Optional.ofNullable(handlePlayer(player))
+                    .filter(this::triggerItemSortEvent)
+                    .ifPresent(ItemSorter.DROP_EXCEEDS.andThen(ItemSorter.UPDATE_PLAYER));
+        } else {
+            Optional.ofNullable(handleInventory(player, event.getClickedInventory()))
+                    .filter(this::triggerItemSortEvent)
+                    .ifPresent(ItemSorter.DROP_EXCEEDS.andThen(ItemSorter.UPDATE_CHEST));
+        }
+    }
+
     public boolean triggerItemSortEvent(final @NotNull ItemSortEvent event) {
         this.getServer().getPluginManager().callEvent(event);
         return !event.isCancelled();
@@ -111,5 +137,14 @@ public class ChestOverflow extends JavaPlugin implements Listener, CommandExecut
         final List<ItemStack> cleanStacks = ItemSorter.sortedItemStacks(ItemSorter.distinctItemStacks(stacks));
 
         return new ItemSortEvent(inventory, cleanStacks.toArray(ItemStack[]::new), player, block);
+    }
+
+    public static @Nullable ItemSortEvent handleInventory(final Player player, final Inventory inventory) {
+        if (inventory == null || inventory.getSize() == 0) return null;
+
+        final Location location = inventory.getLocation();
+        if (location == null) return null;
+
+        return handleChest(player, player.getWorld().getBlockAt(location));
     }
 }
